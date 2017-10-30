@@ -9,7 +9,6 @@
     "node": ">=4.0.0"
   },
   "scripts": {
-    "postinstall": "curl -s https://raw.githubusercontent.com/reactorcore/pomander/master/bin/install | bash",
     "start": "nodemon --ignore node_modules index.js",
     "start:es6": "nodemon --exec babel-node --ignore node_modules index.js",
     "test": "mocha --bail --reporter nyan test/ServerSpec.js",
