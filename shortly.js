@@ -30,7 +30,7 @@ app.use(session({  // restrict eveything?
   cookie: {secure: true}
 }));
 
-app.get('/', 
+app.get('/',
 function(req, res) {
   if (req.session.user) {
     res.render('index');
@@ -39,19 +39,19 @@ function(req, res) {
   }
 });
 
-app.get('/create', 
+app.get('/create',
 function(req, res) {
   res.render('index');
 });
 
-app.get('/links', 
+app.get('/links',
 function(req, res) {
   Links.reset().fetch().then(function(links) {
     res.status(200).send(links.models);
   });
 });
 
-app.post('/links', 
+app.post('/links',
 function(req, res) {
   var uri = req.body.url;
 
@@ -95,39 +95,50 @@ function(req, res) {
 //     res.redirect('/login');
 //   }
 // }
- 
+
 // app.get('/', function(request, response) {
 //    response.send('This is the homepage');
 // });
- 
+
 app.get('/login', function(req, res) {
   res.render('login');
 });
- 
+
 app.post('/login', function(req, res) {
- 
+
   var username = req.body.username;
   var password = req.body.password;
-  
-  db.each('select * from users', function(err, row) {
-    if (err) {
-      console.log('Error === ', err);
-    } else {
-      console.log('Should show user/pw === ', row);
+
+  db.knex('users').select('username', 'password').then(users => {
+    var filtered = users.filter(user => {
+      return user.username === username && user.password === password;
+    });
+    if (filtered.length) {
+      req.session.regenerate(function(){
+        req.session.user = username;
+        res.render('index');
+      })
     }
-  })
+    else {
+      // req.session.regenerate(function(){
+      //   req.session.user = username;
+      //   res.redirect('/index');
+      // })
+    }
+  });
+});
 
   // users.fetch
-  if(username == 'demo' && password == 'demo'){
-    req.session.regenerate(function(){
-    req.session.user = username;
-    res.redirect('/restricted');
-    });
-  }
-  else {
-    res.redirect('login');
-  }    
-});
+//   if(username == 'demo' && password == 'demo'){
+    // req.session.regenerate(function(){
+    // req.session.user = username;
+    // res.redirect('/restricted');
+    // });
+//   }
+//   else {
+//     res.redirect('login');
+//   }
+// });
 
 app.get('/signup', function(req, res) {
   res.render('signup');
@@ -161,13 +172,13 @@ app.post('/signup', function(req, res) {
 // app.get('/logout', function(req, res) {
 //   res.redirect('login');
 // });
- 
+
 app.get('/logout', function(req, res){
   req.session.destroy(function(){
       res.redirect('/');
   });
 });
- 
+
 // app.get('/restricted', restrict, function(req, res){
 //   res.send('This is the restricted area! Hello ' + request.session.user + '! click <a href="/logout">here to logout</a>');
 // });
