@@ -108,6 +108,14 @@ app.post('/login', function(req, res) {
  
   var username = req.body.username;
   var password = req.body.password;
+  
+  db.each('select * from users', function(err, row) {
+    if (err) {
+      console.log('Error === ', err);
+    } else {
+      console.log('Should show user/pw === ', row);
+    }
+  })
 
   // users.fetch
   if(username == 'demo' && password == 'demo'){
