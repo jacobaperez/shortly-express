@@ -2,7 +2,8 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
+var session = require('express-session');
+// var bcrypt = require('bcrypt-node');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -22,10 +23,20 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
+app.use(session({  // restrict eveything?
+  secret: 'session',
+  resave: false,
+  saveUninitialized: true,
+  cookie: {secure: true}
+}));
 
 app.get('/', 
 function(req, res) {
-  res.render('index');
+  if (req.session.user) {
+    res.render('index');
+  } else {
+    res.redirect('/login');
+  }
 });
 
 app.get('/create', 
@@ -76,6 +87,82 @@ function(req, res) {
 // Write your authentication routes here
 /************************************************************/
 
+// function restrict(req, res, next) {
+//   if (req.session.user) {
+//     next();
+//   } else {
+//     req.session.error = 'Access denied!';
+//     res.redirect('/login');
+//   }
+// }
+ 
+// app.get('/', function(request, response) {
+//    response.send('This is the homepage');
+// });
+ 
+app.get('/login', function(req, res) {
+  res.render('login');
+});
+ 
+app.post('/login', function(req, res) {
+ 
+  var username = req.body.username;
+  var password = req.body.password;
+
+  // users.fetch
+  if(username == 'demo' && password == 'demo'){
+    req.session.regenerate(function(){
+    req.session.user = username;
+    res.redirect('/restricted');
+    });
+  }
+  else {
+    res.redirect('login');
+  }    
+});
+
+app.get('/signup', function(req, res) {
+  res.render('signup');
+});
+
+app.post('/signup', function(req, res) {
+  var userInput = req.body.username;
+  var pwInput = req.body.password;
+
+  new User({username: userInput, password: pwInput}).fetch()
+    .then(function(found) {
+    if (found) {
+      res.redirect('login');
+    } else {
+      Users.create({
+        username: userInput,
+        password: pwInput,
+      })
+      .then(function(newUser) {
+        req.session.regenerate(function() {
+          req.session.user = newUser.attributes.username;
+          res.writeHead(302, {Location: '/'});
+          res.end();
+        })
+        // res.status(200).send(newUser);
+      });
+    }
+  });
+});
+
+// app.get('/logout', function(req, res) {
+//   res.redirect('login');
+// });
+ 
+app.get('/logout', function(req, res){
+  req.session.destroy(function(){
+      res.redirect('/');
+  });
+});
+ 
+// app.get('/restricted', restrict, function(req, res){
+//   res.send('This is the restricted area! Hello ' + request.session.user + '! click <a href="/logout">here to logout</a>');
+// });
 
 
 /************************************************************/
